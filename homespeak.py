@@ -1,11 +1,12 @@
-# Python3 - Homespeak
+# Python3 - Homespeak v0.02
 # Query an online Google Home (or Chromecast) device
-# usage: python3 homespeak.py <ip> <all|info|bluetooth|networks>
+# usage: python3 homespeak.py <ip> <all|info|bluetooth|networks etc>
 
 # Requirements:
 # pip3 install requests (for the get requests)
 
-#https://rithvikvibhu.github.io/GHLocalApi/
+# https://rithvikvibhu.github.io/GHLocalApi/
+#post_header = "content-type: application/json"
 
 def printDivider(div, num ):
 	for x in range(0, num):
@@ -17,56 +18,55 @@ import requests, json, sys, argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("ip", help="ip address of the home device")
-parser.add_argument("options", help="options include info, bluetooth, networks, all")
+parser.add_argument("options", help="options include info, bluetooth, networks, donotdisturb, accessibility, alarms, alarmvolume, wifiscan, appdeviceid, all")
 args = parser.parse_args()
 #print(args.echo)
 
-get_configured_networks = "/setup/configured_networks"
-get_bluetooth_bonded = "/setup/bluetooth/get_bonded" #currently connected bluetooth devices
-get_device_info = "/setup/eureka_info?params=version,audio,name,build_info,detail,device_info,net,wifi,setup,settings,opt_in,opencast,multizone,proxy,night_mode_params,user_eq,room_equalizer&options=detail"
+# command name = url strings, post/get, print string
+
+command_list = {
+    'networks': ["/setup/configured_networks", "get", "Get Configured Networks"],
+    'bluetooth': ["/setup/bluetooth/get_bonded", "get", "Get Bluetooth Bonded"],
+    'info': ["/setup/eureka_info?params=version,audio,name,build_info,detail,device_info,net,wifi,setup,settings,opt_in,opencast,multizone,proxy,night_mode_params,user_eq,room_equalizer&options=detail", "get", "Get Device Info"],
+    'donotdisturb': ["/setup/assistant/notifications", "post", "Get Do Not Disturb"],
+    'accessibility': ["/setup/assistant/notifications", "post", "Get Accessibility Settings"],
+	'alarms': ["/setup/assistant/alarms", "get", "Get the currently set alarms and timers."],
+	'alarmvolume': ["/setup/assistant/alarms/volume", "post", "Get Alarm Volume"],
+	'wifiscan': ["/setup/scan_results", "get", "Wifi Scan Results"],
+	'appdeviceid': ["/setup/get_app_device_id", "post", "Get App Device ID"],
+	}
+
+device = "http://"+args.ip+":8008"	
+
+# put options in commands list
+if args.options == "all":
+	commands = command_list.keys()
+elif args.options in command_list.keys():
+	commands = [args.options]	
+else:
+	print("Unknown option: Exiting")
+	exit(0)
 
 
-
-if args.ip:
-	ip = args.ip
-if args.options:
-	if args.options == "all":
-		# add all to array
-		commands = ["info", "bluetooth", "networks"]
-	elif args.options == "bluetooth":
-		commands = ["bluetooth"]
-	elif args.options == "networks":
-		commands = ["networks"]
-	elif args.options == "info":
-		commands = ["info"]
-	else:
-		print("Unknown option: Exiting")
-		exit(0)
-
-
-device = "http://"+ip+":8008"
-
-#post_header = "content-type: application/json"
-#post_get_app_device_id = "/setup/get_app_device_id" #unsure what this does
-
+# for all the commands, run either get or post against the device URL
 for c in commands:
-	if c == "info":
-		command = get_device_info
-		print("Get Device Info")
-	elif c == "bluetooth":
-		command = get_bluetooth_bonded
-		print("Get Bluetooth Bonded")
-	elif c == "networks":
-		command = get_configured_networks
-		print ("Get Configured Networks")
+	if c in command_list.keys():
+		command = command_list[c][0]
+		request_method = command_list[c][1]
+		print (command_list[c][2])
 	else:
 		print("Error")
 		exit(0)
 	
-	# sends get request and converts json
-	r = requests.get(device + command).json()
+	# sends get/post request and converts json
+	if request_method == "get":
+		r = requests.get(device + command).json()
+	elif request_method == "post":
+		r = requests.post(device + command).json()
+	else:
+		print ("Error")
+		exit(0)
+				
 	# pretties up the json output
 	print(json.dumps(r, sort_keys=True, indent=4))
 	printDivider("=", 50)
-
-
