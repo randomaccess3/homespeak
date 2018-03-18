@@ -2,6 +2,10 @@
 # Query an online Google Home (or Chromecast) device
 # usage: python3 homespeak.py <ip> <all|info|bluetooth|networks etc>
 
+
+# 0.01 - initial commit
+# 0.02 - refactor to make adding new get/posts easier and ip formatting validation
+
 # Requirements:
 # pip3 install requests (for the get requests)
 
@@ -14,7 +18,7 @@ def printDivider(div, num ):
 	print()
 	return
 
-import requests, json, sys, argparse
+import requests, json, sys, argparse, ipaddress
 
 parser = argparse.ArgumentParser()
 parser.add_argument("ip", help="ip address of the home device")
@@ -35,6 +39,13 @@ command_list = {
 	'wifiscan': ["/setup/scan_results", "get", "Wifi Scan Results"],
 	'appdeviceid': ["/setup/get_app_device_id", "post", "Get App Device ID"],
 	}
+
+# validate IP address
+try:
+    network = ipaddress.IPv4Network(args.ip)
+except ValueError:
+    print('address/netmask is invalid for IPv4:', args.ip)
+    exit(0)
 
 device = "http://"+args.ip+":8008"	
 
