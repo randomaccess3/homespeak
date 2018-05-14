@@ -5,6 +5,7 @@
 
 # 0.01 - initial commit
 # 0.02 - refactor to make adding new get/posts easier and ip formatting validation
+# 0.03 - fixed minor bug that caused program to crash when json response was not successful
 
 # Requirements:
 # pip3 install requests (for the get requests)
@@ -67,17 +68,23 @@ for c in commands:
 		print (command_list[c][2])
 	else:
 		print("Error")
-		exit(0)
+		continue
 	
 	# sends get/post request and converts json
 	if request_method == "get":
-		r = requests.get(device + command).json()
+		r = requests.get(device + command)
+		#print (r.status_code)
 	elif request_method == "post":
-		r = requests.post(device + command).json()
+		r = requests.post(device + command)
+		#print (r.status_code)
 	else:
 		print ("Error")
-		exit(0)
-				
+		printDivider("=", 50)
+		continue
+	
 	# pretties up the json output
-	print(json.dumps(r, sort_keys=True, indent=4))
+	if r.status_code == 200:
+		print(json.dumps(r.json(), sort_keys=True, indent=4))
+		
+		
 	printDivider("=", 50)
