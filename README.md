@@ -2,6 +2,7 @@
 Script for querying Google home devices
 
 Python version: Python3
+
 Library requirements: requests (pip3 install requests)
 
 Usage:
